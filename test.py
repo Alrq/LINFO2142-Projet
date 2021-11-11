@@ -1,112 +1,189 @@
-from ipmininet.iptopo import IPTopo
-from ipmininet.router.config import BGP, ebgp_session, set_rr, AccessList, \
-    AF_INET6
-
 import argparse
 import json
 import os
 from mininet.log import LEVELS, lg
-from ipmininet.iptopo import IPTopo
-from ipmininet.router.config import BGP, ebgp_session, set_rr, AccessList, \
-    AF_INET6
 
 import ipmininet
 from ipmininet.cli import IPCLI
 from ipmininet.ipnet import IPNet
 from ipmininet.iptopo import IPTopo
+
 from ipmininet.router.config import RouterConfig, BGP, iBGPFullMesh, AS, bgp_peering
 import ipmininet.router.config.bgp as _bgp
 
 
-class BGPTopoFull(IPTopo):
-    """This topology is composed of two AS connected in dual homing
-     with different local pref and MED. AS1 has one route reflector: as1r3."""
+"""This file contains a simple network using BGP"""
+
+class BGPConfig(RouterConfig):
+    """A simple config with only a BGP daemon"""
+    def __init__(self, node, *args, **kwargs):
+        super(BGPConfig, self).__init__(node,
+                                        daemons=((BGP, defaults),),
+                                        *args, **kwargs)
+
+
+class SimpleBGP(IPTopo):
 
     def build(self, *args, **kwargs):
-        """
-                                 +
-                           AS1   |   AS4
-        +-------+                |
-        | as1r1 +--------+       |
-        +---+---+        |       |
-          2 |            |       |
-        +---+---+    +---+---+   |   +-------+
-        | as1r3 +----+ as1r6 +-------+ as4r1 +--------+
-        +---+---+    +---+---+   |   +-------+        |
-            |            |       |                    |
-        +---+---+        |       |                 +--+--+     +-------+
-        | as1r2 |        |       |                 | s4  +-----+ as4h1 |
-        +---+---+        |       |                 +--+--+     +-------+
-          4 |            |       |                    |
-        +---+---+    +---+---+   |   +-------+        |
-        | as1r4 +----+ as1r5 +-------+ as4r2 +--------+
-        +-------+    +-------+   |   +-------+
-                                 |
-                                 +
-        """
+        
+        # BGP routers
 
-        # Add all routers
-        as1r1 = self.bgp('as1r1')
-        as1r2 = self.bgp('as1r2')
-        as1r3 = self.bgp('as1r3')
-        as1r4 = self.bgp('as1r4')
-        as1r5 = self.bgp('as1r5',
-                         family=AF_INET6(redistribute=('ospf6', 'connected')))
-        as1r6 = self.bgp('as1r6',
-                         family=AF_INET6(redistribute=('ospf6', 'connected')))
-        as4r1 = self.bgp('as4r1', family=AF_INET6(networks=('dead:beef::/32',)))
-        as4r2 = self.bgp('as4r2', family=AF_INET6(networks=('dead:beef::/32',)))
+        as1ra = self.bgp('as1ra',['2001:1111:1::/64'])
+        as1rb = self.bgp('as1rb',['2001:1111:2::/64'])
+        as1rc = self.bgp('as1rc',['2001:1111:3::/64'])
+        as1rd = self.bgp('as1rd',['2001:1111:4::/64'])
+        as1re = self.bgp('as1re',['2001:1111:5::/64'])
+        as1rf = self.bgp('as1rf',['2001:1111:6::/64'])
 
-        # Add the host and the switch
-        as4h1 = self.addHost('as4h1')
-        switch = self.addSwitch('s4')
+        # Amazon
+        as2ra = self.bgp('as2ra',['2001:2222:1::/64'])
+        as2rb = self.bgp('as2rb',['2001:2222:2::/64'])
 
-        # Add Links
-        self.addLink(as1r1, as1r6)
-        self.addLink(as1r1, as1r3, igp_metric=2)
-        self.addLinks((as1r3, as1r2), (as1r3, as1r6))
-        self.addLink(as1r2, as1r4, igp_metric=4)
-        self.addLinks((as1r4, as1r5), (as1r5, as1r6), (as4r1, as1r6),
-                      (as4r2, as1r5), (as4r1, switch), (as4r2, switch),
-                      (switch, as4h1))
-        self.addSubnet((as4r1, as4r2, as4h1), subnets=('dead:beef::/32',))
+        # Google
+        as3ra = self.bgp('as3ra',['2001:3333:1::/64'])
+        as3rb = self.bgp('as3rb',['2001:3333:2::/64'])
+        as3rc = self.bgp('as3rc',['2001:3333:3::/64'])
 
-        al4 = AccessList(name='all4', entries=('any',), family='ipv4')
-        al6 = AccessList(name='all6', entries=('any',), family='ipv6')
+        # Facebook
+        as4ra = self.bgp('as4ra',['2001:4444:1::/64'])
+        as4rb = self.bgp('as4rb',['2001:4444:2::/64'])
 
-        as1r6.get_config(BGP)\
-            .set_local_pref(99, from_peer=as4r1, matching=(al4, al6))\
-            .set_med(50, to_peer=as4r1, matching=(al4, al6))
+        # Netflix
+        as5ra = self.bgp('as5ra',['2001:5555:1::/64'])
+        as5rb = self.bgp('as5rb',['2001:5555:2::/64'])
+        as5rc = self.bgp('as5rc',['2001:5555:3::/64'])
 
-        as4r1.get_config(BGP)\
-            .set_community('1:80', from_peer=as1r6, matching=(al4, al6))\
-            .set_med(50, to_peer=as1r6, matching=(al4, al6))
 
-        as1r5.get_config(BGP).set_local_pref(50, from_peer=as4r2,
-                                             matching=(al4, al6))
+       # Set AS-ownerships
 
-        # Add full mesh
-        self.addAS(4, (as4r1, as4r2))
-        self.addAS(1, (as1r1, as1r2, as1r3, as1r4, as1r5, as1r6))
-        set_rr(self, rr=as1r3, peers=(as1r1, as1r2, as1r4, as1r5, as1r6))
+        self.addOverlay(AS(1, (as1ra,as1rb,as1rc, as1rd, as1re, as1rf)))
+        self.addOverlay(AS(2, (as2ra,as2rb)))
+        self.addOverlay(AS(3, (as3ra,as3rb, as3rc)))
+        self.addOverlay(AS(4, (as4ra,as4rb)))
+        self.addOverlay(AS(5, (as5ra,as5rb, as5rc )))
 
-        # Add eBGP session
-        ebgp_session(self, as1r6, as4r1)
-        ebgp_session(self, as1r5, as4r2)
+        # Inter-AS links
 
-        super().build(*args, **kwargs)
+        self.addLink(as1ra, as2ra)
+        self.addLink(as1ra, as4ra)
+        self.addLink(as1ra, as3ra)
 
-    def bgp(self, name, family=AF_INET6()):
-        r = self.addRouter(name)
-        r.addDaemon(BGP ,address_families=(family,))
-        return r
+
+        self.addLink(as1rb, as3rb)
+        self.addLink(as1rb, as2rb)
+        self.addLink(as1rb, as5rb)
+
+
+        self.addLink(as1re, as3rc)
+        self.addLink(as1re, as5rb)
+
+
+        self.addLink(as1rf, as4rb)
+
+
+        # Intra-AS links
+        
+        #AS1
+
+        self.addLink(as1ra, as1rb)
+        self.addLink(as1ra, as1rc)
+        self.addLink(as1rb, as1rd)
+        self.addLink(as1rc, as1re)
+        self.addLink(as1rc, as1rd)
+        self.addLink(as1re, as1rf)
+        self.addLink(as1rf, as1rd)
+        
+
+        #AS2
+        self.addLink(as2ra, as2rb)
+
+
+        #AS3
+        self.addLink(as3ra, as3rb)
+        self.addLink(as3rb, as3rc)
+        
+        #AS4
+        self.addLink(as4ra, as4rb)
+        
+        #AS5
+        self.addLink(as5ra, as5rb)
+
+
+        # Add eBGP peering
+        bgp_peering(self, as1ra, as2ra)
+        bgp_peering(self, as1ra, as4ra)
+        bgp_peering(self, as1ra, as3ra)
+
+        bgp_peering(self, as1rb, as3rb)
+        bgp_peering(self, as1rb, as2rb)
+        bgp_peering(self, as1rb, as5rb)
+
+        bgp_peering(self, as1re, as3rc)
+        bgp_peering(self, as1re, as5rb)
+
+        bgp_peering(self, as1rf, as4rb)
+
+
+        # hosts attached to the routers
+        host1 = self.addHost('as1ha')
+        host2 = self.addHost('as2ha')
+        host3 = self.addHost('as3ha')
+        host4 = self.addHost('as4ha')
+        host5 = self.addHost('as5ha')
+
+        #ADD SWITCHES
+        s1 = self.addSwitch('s1')
+        s2 = self.addSwitch('s2')
+        s3 = self.addSwitch('s3')
+        s4 = self.addSwitch('s4')
+        s5 = self.addSwitch('s5')
+
+        #Link routers to switches
+
+        self.addLink(as1rd, s1)
+
+        self.addLink(as2ra, s2)
+
+        self.addLink(as3ra, s3) 
+
+        self.addLink(as4ra, s4)   
+
+        self.addLink(as5ra, s5)     
+
+
+    
+        #LINK HOSTS WITH SWITCHES
+        self.addLink(host1,s1)
+        self.addLink(host2,s2)
+        self.addLink(host3,s3)
+        self.addLink(host4,s4)
+        self.addLink(host5,s5)
+
+
+
+        #super(SimpleBGP, self).build(*args, **kwargs)
+
+    def bgp(self, name, net=None):
+        if net is None:
+            net=[]
+        return self.addRouter(name, use_v4=False, 
+                              use_v6=True, 
+                              config=(RouterConfig,
+                                      { 'daemons': [(BGP, 
+#                                                   { 'address_families': ( _bgp.AF_INET6(networks=net),)} 
+                                                   { 'address_families': ( _bgp.AF_INET6(networks=net,redistribute=('connected',)),)} 
+                                                   )]
+                                       }
+                                      )
+                              )
+
 
 ipmininet.DEBUG_FLAG = True
 
 os.environ["PATH"] += os.pathsep + "/home/vagrant/quagga/bin" + os.pathsep + "/home/vagrant/quagga/sbin"
 
 # Start network
-net = IPNet(topo=BGPTopoFull(), use_v4=False, use_v6=True, allocate_IPs=False)
+net = IPNet(topo=SimpleBGP(), use_v4=False, use_v6=True, allocate_IPs=False)
 net.start()
 IPCLI(net)
 net.stop()
