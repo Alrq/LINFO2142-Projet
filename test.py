@@ -64,49 +64,93 @@ class SimpleBGP(IPTopo):
 
         # Inter-AS links
 
-        self.addLink(as1ra, as2ra)
-        self.addLink(as1ra, as4ra)
-        self.addLink(as1ra, as3ra)
+        self.addLink(as1ra, as2ra,
+                     params1={"ip": "2001:1111:1::1/64"}, #AS1-a1
+                     params2={"ip": "2001:2222:1::1/64"}) #AS2-a1
+        self.addLink(as1ra, as4ra,   
+                     params1={"ip": "2001:1111:1::2/64"}, #AS1-a2
+                     params2={"ip": "2001:4444:1::1/64"}) #AS4-a1
+        self.addLink(as1ra, as3ra,  
+                     params1={"ip": "2001:1111:1::3/64"}, #AS1-a3
+                     params2={"ip": "2001:3333:1::1/64"}) #AS3-a1
 
 
-        self.addLink(as1rb, as3rb)
-        self.addLink(as1rb, as2rb)
-        self.addLink(as1rb, as5rb)
+        self.addLink(as1rb, as3rb,                      
+                     params1={"ip": "2001:1111:2::1/64"}, #AS1-b1
+                     params2={"ip": "2001:3333:2::1/64"}) #AS3-b1
+        self.addLink(as1rb, as2rb,                      
+                     params1={"ip": "2001:1111:2::2/64"}, #AS1-b2
+                     params2={"ip": "2001:2222:2::1/64"}) #AS2-b1
+        self.addLink(as1rb, as5rb,                      
+                     params1={"ip": "2001:1111:2::3/64"}, #AS1-b3
+                     params2={"ip": "2001:5555:2::1/64"}) #AS5-b1
 
 
-        self.addLink(as1re, as3rc)
-        self.addLink(as1re, as5rb)
+        self.addLink(as1re, as3rc,                      
+                     params1={"ip": "2001:1111:5::1/64"}, #AS1-e1 
+                     params2={"ip": "2001:3333:3::1/64"}) #AS3-c1
+        self.addLink(as1re, as5rb,                      
+                     params1={"ip": "2001:1111:5::2/64"}, #AS1-e2
+                     params2={"ip": "2001:5555:2::2/64"}) #AS5-b2
 
 
-        self.addLink(as1rf, as4rb)
+        self.addLink(as1rf, as4rb,
+                     params1={"ip": "2001:1111:6::1/64"},  #AS1-f1
+                     params2={"ip": "2001:4444:2::1/64"})  #AS4-b1
+        
 
 
         # Intra-AS links
         
-        #AS1
+        #AS1                        2001:1111:1::1     /64
+        #                           2001: AS1:a::numDuA/64
 
-        self.addLink(as1ra, as1rb)
-        self.addLink(as1ra, as1rc)
-        self.addLink(as1rb, as1rd)
-        self.addLink(as1rc, as1re)
-        self.addLink(as1rc, as1rd)
-        self.addLink(as1re, as1rf)
-        self.addLink(as1rf, as1rd)
+        self.addLink(as1ra, as1rb,
+                     params1={"ip": "2001:1111:1::11/64"}, #1a1 - 1b1
+                     params2={"ip": "2001:1111:2::21/64"})
+        self.addLink(as1ra, as1rc,
+                     params1={"ip": "2001:1111:1::12/64"}, # 1a2 - 1c1 
+                     params2={"ip": "2001:1111:3::31/64"}) 
+        self.addLink(as1rb, as1rd,
+                     params1={"ip": "2001:1111:2::22/64"}, # 1b2 - 1d1
+                     params2={"ip": "2001:1111:4::41/64"})
+        self.addLink(as1rc, as1re,
+                     params1={"ip": "2001:1111:3::31/64"}, # 1c1 - 1e1
+                     params2={"ip": "2001:1111:5::51/64"})
+        self.addLink(as1rc, as1rd,
+                     params1={"ip": "2001:1111:3::32/64"}, # 1c2 - 1d2
+                     params2={"ip": "2001:1111:4::42/64"})
+        self.addLink(as1re, as1rf,
+                     params1={"ip": "2001:1111:5::52/64"}, # 1e2 - 1f1
+                     params2={"ip": "2001:1111:6::61/64"})
+        self.addLink(as1rf, as1rd,
+                     params1={"ip": "2001:1111:6::62/64"}, # 1f2- 1d3
+                     params2={"ip": "2001:1111:5::53/64"})
         
 
         #AS2
-        self.addLink(as2ra, as2rb)
+        self.addLink(as2ra, as2rb,
+                     params1={"ip": ""}, 
+                     params2={"ip": ""})
 
 
         #AS3
-        self.addLink(as3ra, as3rb)
-        self.addLink(as3rb, as3rc)
+        self.addLink(as3ra, as3rb,
+                     params1={"ip": ""}, 
+                     params2={"ip": ""})
+        self.addLink(as3rb, as3rc,
+                     params1={"ip": ""}, 
+                     params2={"ip": ""})
         
         #AS4
-        self.addLink(as4ra, as4rb)
+        self.addLink(as4ra, as4rb,
+                     params1={"ip": ""}, 
+                     params2={"ip": ""})
         
         #AS5
-        self.addLink(as5ra, as5rb)
+        self.addLink(as5ra, as5rb,
+                     params1={"ip": ""}, 
+                     params2={"ip": ""})
 
 
         # Add eBGP peering
@@ -170,7 +214,7 @@ class SimpleBGP(IPTopo):
                               use_v6=True, 
                               config=(RouterConfig,
                                       { 'daemons': [(BGP, 
-#                                                   { 'address_families': ( _bgp.AF_INET6(networks=net),)} 
+#                                                   { https://prod.liveshare.vsengsaas.visualstudio.com/join?C2E269924C54E7ECCAE89BC926C0DF70C427'address_families': ( _bgp.AF_INET6(networks=net),)} 
                                                    { 'address_families': ( _bgp.AF_INET6(networks=net,redistribute=('connected',)),)} 
                                                    )]
                                        }
