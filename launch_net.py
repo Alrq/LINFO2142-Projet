@@ -6,11 +6,12 @@ from ipmininet.clean import cleanup
 from mininet.log import lg, LEVELS
 
 from my_topo_projet import MyTopo
-
+from bgp_community import MyTopoCommunity
 import argparse
 
 TOPOS = {
         'my_topo_projet': MyTopo,
+        'bgp_community': MyTopoCommunity,
          }
 
 

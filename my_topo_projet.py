@@ -29,7 +29,8 @@ class MyTopo(IPTopo):
         
         #as2r1 = self.addRouter('as2r1')
         #as2r1.addDaemon(BGP, address_families=(AF_INET6(networks=('dead:beef::/32',)),))
-        
+
+        ## Note to self: il faut obviously un host pour pouvoir envoyer des paquets. 
         as1h1 = self.addHost("as1h1")
         as1h2 = self.addHost("as1h2")
         as1h3 = self.addHost("as1h3")
