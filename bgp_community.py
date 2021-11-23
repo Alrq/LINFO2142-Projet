@@ -22,12 +22,10 @@ class MyTopoCommunity(IPTopo):
         self.addLink(as1r1, as1h1)
         self.addLink(as3r1, as3h1)
 
-        #al6 = AccessList(name='all6', entries=('any',), family='ipv6')
-        #as1r1.get_config(BGP).set_community('1:80', matching=(al6))
+        al6 = AccessList(name='all6', entries=('any',), family='ipv6')
+        as1r1.get_config(BGP).set_community('1:80', matching=(al6))
         
-        self.addAS(1, (as1r1))
-        self.addAS(2, (as2r1))
-        self.addAS(3, (as3r1))
+        
         ebgp_session(self, as1r1, as2r1)
         ebgp_session(self, as2r1, as3r1)
 
