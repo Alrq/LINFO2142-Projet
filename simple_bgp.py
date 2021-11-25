@@ -1,5 +1,9 @@
 from ipmininet.iptopo import IPTopo
+<<<<<<< HEAD
 from ipmininet.router.config import RouterConfig, BGP, ebgp_session, CommunityList, AccessList
+=======
+from ipmininet.router.config import RouterConfig, BGP, ebgp_session
+>>>>>>> 4c7a91f04269f6a2ee40693a4eba2e13b7d0c926
 import ipmininet.router.config.bgp as _bgp
 
 
@@ -22,10 +26,17 @@ class SimpleBGPTopo(IPTopo):
          +------------+                                   +--------+
         """
         # Add all routers
+<<<<<<< HEAD
         as1r1 = self.bgp('as1r1', ['2001:1111:1::/64'])
         as2r1 = self.bgp('as2r1', ['2001:1111:2::/64'])
         as2r2 = self.bgp('as2r2', ['2001:1111:3::/64'])
         as3r1 = self.bgp('as3r1', ['2001:1111:4::/64'])
+=======
+        as1r1 = self.bgp('as1r1')
+        as2r1 = self.bgp('as2r1')
+        as2r2 = self.bgp('as2r2')
+        as3r1 = self.bgp('as3r1')
+>>>>>>> 4c7a91f04269f6a2ee40693a4eba2e13b7d0c926
         # as2r3 = self.addRouter('as2r3')
         # as2r3.addDaemon(BGP, route_reflector_client=True)
         self.addLink(as1r1, as2r1)
@@ -42,6 +53,7 @@ class SimpleBGPTopo(IPTopo):
         # Add test hosts
         for r in self.routers():
             self.addLink(r, self.addHost('h%s' % r))
+<<<<<<< HEAD
 
         #all_al4 = AccessList(family='ipv4', name='allv4', entries=('any',))
         #all_al6 = AccessList(family='ipv6', name='allv6', entries=('any',))
@@ -54,6 +66,11 @@ class SimpleBGPTopo(IPTopo):
 
 
 
+=======
+    
+        super(SimpleBGPTopo, self).build(*args, **kwargs)
+
+>>>>>>> 4c7a91f04269f6a2ee40693a4eba2e13b7d0c926
     def bgp(self, name):
         r = self.addRouter(name)
         r.addDaemon(BGP, address_families=(
