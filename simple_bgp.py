@@ -92,3 +92,19 @@ class SimpleBGPTopo(IPTopo):
             _bgp.AF_INET6(redistribute=('connected',))))
 
         return r
+
+
+def setFRRoutingCommands(net) :
+    #                                                PEER       PEER            PROVIDER    PROVIDER      CLIENT        CLIENT      (CLIENT anycast)
+    net['as1r1'].cmd('python3 telnet_sin5_ipv6.py fc00:0:6::b/64 fc00:2:8::2/64 fc00:4:32::2 fc00:4:40::2 fc00:4:96:1::2 fc00:4:96:2::2 fc00:4:99::2')
+
+
+
+if __name__ == '__main__':
+    net = IPNet(topo=SimpleBGPTopo(), allocate_IPs=False)
+    try:
+        net.start()
+        setFRRoutingCommands(net)
+        IPCLI(net)
+    finally:
+        net.stop()

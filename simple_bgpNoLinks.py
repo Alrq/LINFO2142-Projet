@@ -43,6 +43,7 @@ class SimpleBGPTopoNoLinks(IPTopo):
         # Add test hosts
         for r in self.routers():
             self.addLink(r, self.addHost('h%s' % r))
+
     
         super(SimpleBGPTopoNoLinks, self).build(*args, **kwargs)
 
